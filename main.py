@@ -30,8 +30,8 @@ def get_argparser():
     parser.add_argument("--train_data", type=str, default='train/train',
                         help="relative path of the train data in the root path")
 
-    parser.add_argument("--test_data", type=str, default='test/test',
-                        help="relative path of the test data in the root path")
+    parser.add_argument("--val_data", type=str, default='test/test',
+                        help="relative path of the validation data in the root path")
     
     parser.add_argument("--dataset", type=str, default='voc',
                         choices=['voc', 'cityscapes', 'dlo'], help='Name of dataset')
@@ -185,7 +185,7 @@ def get_dataset(opts):
             ])
         train_dst = DLOSegmentationDataset(root=opts.data_root, base_dir=opts.train_data, 
                                            transform=train_transform)
-        val_dst = DLOSegmentationDataset(root=opts.data_root, base_dir=opts.test_data,
+        val_dst = DLOSegmentationDataset(root=opts.data_root, base_dir=opts.val_data,
                                             transform=val_transform)
 
     return train_dst, val_dst

@@ -8,7 +8,7 @@ import argparse
 import numpy as np
 
 from torch.utils import data
-from datasets import VOCSegmentation, Cityscapes, cityscapes
+from datasets import VOCSegmentation, Cityscapes, cityscapes, DLOSegmentationDataset
 from torchvision import transforms as T
 from metrics import StreamSegMetrics
 
@@ -27,7 +27,7 @@ def get_argparser():
     parser.add_argument("--input", type=str, required=True,
                         help="path to a single image or image directory")
     parser.add_argument("--dataset", type=str, default='voc',
-                        choices=['voc', 'cityscapes'], help='Name of training set')
+                        choices=['voc', 'cityscapes', 'dlo'], help='Name of training set')
 
     # Deeplab Options
     available_models = sorted(name for name in network.modeling.__dict__ if name.islower() and \
@@ -66,6 +66,9 @@ def main():
     elif opts.dataset.lower() == 'cityscapes':
         opts.num_classes = 19
         decode_fn = Cityscapes.decode_target
+    elif opts.dataset.lower() == 'dlo':
+        opts.num_classes = 2
+        decode_fn = DLOSegmentationDataset.decode_target
 
     os.environ['CUDA_VISIBLE_DEVICES'] = opts.gpu_id
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -126,16 +129,12 @@ def main():
             img = Image.open(img_path).convert('RGB')
             img = transform(img).unsqueeze(0) # To tensor of NCHW
             img = img.to(device)
-
-            pred = model(img)
-            print("pred.shape: ", pred.shape)
             
             pred = model(img).max(1)[1].cpu().numpy()[0] # HW
 
-            print(pred)
-
             colorized_preds = decode_fn(pred).astype('uint8')
             colorized_preds = Image.fromarray(colorized_preds)
+
             if opts.save_val_results_to:
                 colorized_preds.save(os.path.join(opts.save_val_results_to, img_name+'.png'))
 
